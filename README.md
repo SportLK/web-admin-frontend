@@ -1,63 +1,39 @@
-# 🛠️ SportLK Admin Website
+# SportLK Admin Console
 
-<p align="center">
-  <strong>A web control room for managing the SportLK sports community.</strong>
-</p>
+Next.js workspace for member account management, community moderation, reports, and Team Manager / Tournament Organizer approvals.
 
-The SportLK admin website is the browser-based workspace for platform administrators. It is part of a wider platform for sports events, teams, tournaments, match results, and community activity in Sri Lanka.
+This module owns user identity, profiles, community content, reports, notifications, and role applications. Teams, rosters, tournaments, schedules, and event operations are owned by their respective platform modules. Approvals grant role permissions in the user's shared profile so external modules can grant workspace access.
 
-## 🧰 Technology
+---
 
-| Layer | Technology |
-| --- | --- |
-| Web application | Next.js 16 · React · TypeScript |
-| Database | MySQL, accessed by server-side application code |
-| Mobile client | [React Native](https://github.com/SportLK/mobile-frontend) |
-| API service | [NestJS backend](https://github.com/SportLK/backend) |
+## Run Locally
 
-Keep database credentials and queries in server-side code. Never expose MySQL credentials to browser code.
-
-## ✨ Planned admin capabilities
-
-- Review and manage users, teams, and sports events
-- Moderate community content and respond to reports
-- Review match results and resolve score disputes
-- View platform activity, transaction records, and analytics
-
-These describe the intended scope. This repository currently contains an initial Next.js scaffold; SportLK admin workflows and MySQL integration are still to be implemented.
-
-## 🚀 Run locally
-
-### Requirements
-
-- Node.js and npm
-- Access to a MySQL instance when database integration is added
-
-Install dependencies:
+The backend listens on port `3000`; the admin website uses port `3001`.
 
 ```bash
-npm ci
-```
-
-Start the development server:
-
-```bash
+npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Point the dashboard at the NestJS API:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+```
 
-## 🧪 Available scripts
+Without an admin session, the dashboard opens in preview mode with sample data and local-only actions. Use an admin account created by the backend to sign in and synchronize live data.
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the local development server |
-| `npm run build` | Build the production app |
-| `npm run start` | Serve the production build |
-| `npm run lint` | Run ESLint |
+---
 
-## 🔗 SportLK repositories
+## Admin Workflows
 
-- [Backend API](https://github.com/SportLK/backend)
-- [Mobile app](https://github.com/SportLK/mobile-frontend)
-- [Admin website](https://github.com/SportLK/web-admin-frontend)
+- **Member Management**: Search, filter, and manage member status (Active, Review, Suspended).
+- **Community Moderation**: Review or toggle visibility on community posts.
+- **Reports Resolution**: Triage user, post, and community reports submitted by players.
+- **Role Applications**: Approve or decline manager and organizer applications.
+- **Platform Overview**: Community growth charts, top sports, and real-time activity indicators.
+
+---
+
+## Multi-Member Integration
+
+For complete architecture, database entity relationships, and backend integration contracts across all 4 team members, refer to [TEAM_INTEGRATION_GUIDE.md](./TEAM_INTEGRATION_GUIDE.md).
