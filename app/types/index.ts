@@ -1,58 +1,50 @@
-export type SportType = 'CRICKET' | 'FUTSAL' | 'BADMINTON' | 'BASKETBALL' | 'TENNIS' | 'TABLE_TENNIS';
+export type SportType = 'CRICKET' | 'FUTSAL' | 'BADMINTON' | 'BASKETBALL';
 
 export type MatchStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'ABANDONED' | 'POSTPONED';
 
 export interface VenueFacility {
   id?: string;
   venueId?: string;
+  sportType: SportType;
+  courtOrPitchCount: number;
   hasFloodlights: boolean;
   hasParking: boolean;
   hasChangingRooms: boolean;
-  hasShowerFacilities: boolean;
-  hasSpectatorSeating: boolean;
-  hasCafeteria: boolean;
-  hasEquipmentRental: boolean;
-  hasFirstAid: boolean;
 }
 
 export interface Venue {
   id: string;
   venueName: string;
-  address: string;
+  addressLine: string;
   city: string;
-  district: string;
+  district?: string;
   province?: string;
-  postalCode?: string;
+  contactPhone?: string;
+  hourlyBaseRate: number;
+  isActive: boolean | number;
   latitude: number;
   longitude: number;
-  contactPersonName?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  hourlyRate: number;
-  surfaceType: string;
-  isActive: boolean;
-  facilities?: VenueFacility;
   createdAt?: string;
-  updatedAt?: string;
-  matchesHosted?: number;
+  facilities?: VenueFacility[];
 }
 
 export interface CreateVenueDto {
   venueName: string;
-  address: string;
+  addressLine: string;
   city: string;
-  district: string;
+  district?: string;
   province?: string;
-  postalCode?: string;
+  contactPhone?: string;
   latitude: number;
   longitude: number;
-  contactPersonName?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  hourlyRate: number;
-  surfaceType: string;
-  isActive?: boolean;
-  facilities?: Partial<VenueFacility>;
+  hourlyBaseRate?: number;
+  facilities?: Array<{
+    sportType: SportType;
+    courtOrPitchCount?: number;
+    hasFloodlights?: boolean;
+    hasParking?: boolean;
+    hasChangingRooms?: boolean;
+  }>;
 }
 
 export interface MatchScorecard {
@@ -131,47 +123,4 @@ export interface UpdateScoreDto {
   homeTeamScoreDisplay?: string;
   awayTeamScoreDisplay?: string;
   detailedScorecardJson?: Record<string, any>;
-}
-
-export interface PlatformOverviewStats {
-  matches: {
-    total: number;
-    byStatus: {
-      SCHEDULED: number;
-      LIVE: number;
-      COMPLETED: number;
-      ABANDONED?: number;
-      POSTPONED?: number;
-    };
-  };
-  venues: {
-    total: number;
-    active: number;
-  };
-  teams: {
-    activeTotal: number;
-  };
-  tournaments: {
-    total: number;
-  };
-  users?: {
-    total: number;
-    managers: number;
-    organizers: number;
-  };
-}
-
-export interface SportBreakdownItem {
-  sportType: string;
-  totalMatches: number;
-  completedMatches: number;
-  liveMatches: number;
-}
-
-export interface TopVenueItem {
-  id: string;
-  venueName: string;
-  city: string;
-  district?: string;
-  matchesHosted: number;
 }

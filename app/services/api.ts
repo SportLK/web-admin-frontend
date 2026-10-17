@@ -5,35 +5,33 @@ import {
   CreateMatchDto,
   UpdateScoreDto,
   MatchStatus,
-  PlatformOverviewStats,
-  SportBreakdownItem,
-  TopVenueItem,
 } from '../types';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  try {
-    const res = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...options.headers,
-      },
-    });
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...options.headers,
+    },
+  });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`API Error (${res.status}): ${errText || res.statusText}`);
+  if (!res.ok) {
+    let errMessage = res.statusText;
+    try {
+      const errJson = await res.json();
+      errMessage = errJson.message || JSON.stringify(errJson);
+    } catch {
+      errMessage = await res.text();
     }
-
-    return await res.json();
-  } catch (error: any) {
-    console.warn(`API request failed for ${url}:`, error.message);
-    throw error;
+    throw new Error(Array.isArray(errMessage) ? errMessage.join(', ') : errMessage);
   }
+
+  return await res.json();
 }
 
 // ==========================================
@@ -42,8 +40,8 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
 export const venuesApi = {
   getAll: (sportType?: string, city?: string) => {
     const params = new URLSearchParams();
-    if (sportType) params.append('sportType', sportType);
-    if (city) params.append('city', city);
+    if (sportType && sportType !== 'ALL') params.append('sportType', sportType);
+    if (city && city !== 'ALL') params.append('city', city);
     const qs = params.toString();
     return apiFetch<Venue[]>(`/venues${qs ? `?${qs}` : ''}`);
   },
@@ -56,7 +54,7 @@ export const venuesApi = {
       body: JSON.stringify(dto),
     }),
 
-  update: (id: string, dto: Partial<CreateVenueDto>) =>
+  update: (id: string, dto: Partial<CreateVenueDto> & { isActive?: boolean }) =>
     apiFetch<Venue>(`/venues/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(dto),
@@ -69,7 +67,7 @@ export const venuesApi = {
     }),
 
   delete: (id: string) =>
-    apiFetch<{ success: boolean; message?: string }>(`/venues/${id}`, {
+    apiFetch<{ message?: string }>(`/venues/${id}`, {
       method: 'DELETE',
     }),
 };
@@ -109,20 +107,7 @@ export const matchesApi = {
     }),
 
   delete: (id: string) =>
-    apiFetch<{ success: boolean }>(`/matches/${id}`, {
+    apiFetch<{ message?: string }>(`/matches/${id}`, {
       method: 'DELETE',
     }),
-};
-
-// ==========================================
-// STATISTICS API (Member 4)
-// ==========================================
-export const statisticsApi = {
-  getOverview: () => apiFetch<PlatformOverviewStats>('/statistics/overview'),
-
-  getMatchStats: () =>
-    apiFetch<{ sportsBreakdown: SportBreakdownItem[]; recentCompleted: any[] }>('/statistics/matches'),
-
-  getVenueStats: () =>
-    apiFetch<{ topVenues: TopVenueItem[]; cityDistribution: any[]; facilitiesOverview: any }>('/statistics/venues'),
 };
