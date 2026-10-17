@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
   Calendar,
   MapPin,
   Users,
@@ -14,89 +13,75 @@ import {
   Bell,
   Settings,
   LogOut,
-  Activity,
-  Flame,
 } from 'lucide-react';
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  memberScope?: string;
-  isMember4Active?: boolean;
+  isActiveRoute?: boolean;
 }
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
 
-  const navItems: NavItem[] = [
-    {
-      label: 'Overview',
-      href: '/',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      memberScope: 'Member 4',
-      isMember4Active: true,
-    },
+  const activeNavItems: NavItem[] = [
     {
       label: 'Matches',
       href: '/matches',
       icon: <Calendar className="w-5 h-5" />,
-      memberScope: 'Member 4',
-      isMember4Active: true,
+      isActiveRoute: true,
     },
     {
       label: 'Venues',
       href: '/venues',
       icon: <MapPin className="w-5 h-5" />,
-      memberScope: 'Member 4',
-      isMember4Active: true,
+      isActiveRoute: true,
     },
+  ];
+
+  const otherNavItems: NavItem[] = [
     {
       label: 'Tournaments',
       href: '#',
       icon: <Trophy className="w-5 h-5" />,
-      memberScope: 'Member 3',
-      isMember4Active: false,
+      isActiveRoute: false,
     },
     {
       label: 'Teams',
       href: '#',
       icon: <Users className="w-5 h-5" />,
-      memberScope: 'Member 2',
-      isMember4Active: false,
+      isActiveRoute: false,
     },
     {
       label: 'Users',
       href: '#',
       icon: <Users className="w-5 h-5" />,
-      memberScope: 'Member 1',
-      isMember4Active: false,
+      isActiveRoute: false,
     },
     {
       label: 'Role applications',
       href: '#',
       icon: <ShieldCheck className="w-5 h-5" />,
-      memberScope: 'Member 1',
-      isMember4Active: false,
+      isActiveRoute: false,
     },
     {
       label: 'Community',
       href: '#',
       icon: <MessageSquare className="w-5 h-5" />,
-      memberScope: 'Member 1',
-      isMember4Active: false,
+      isActiveRoute: false,
     },
     {
       label: 'Notifications',
       href: '#',
       icon: <Bell className="w-5 h-5" />,
-      isMember4Active: false,
+      isActiveRoute: false,
     },
     {
       label: 'Settings',
       href: '#',
       icon: <Settings className="w-5 h-5" />,
-      isMember4Active: false,
+      isActiveRoute: false,
     },
   ];
 
@@ -124,42 +109,22 @@ export const Sidebar: React.FC = () => {
           </p>
 
           <nav className="space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              const isClickable = item.isMember4Active;
-
-              if (!isClickable) {
-                return (
-                  <div
-                    key={item.label}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-lg text-slate-400 opacity-60 cursor-not-allowed group"
-                    title={item.memberScope ? `Managed by ${item.memberScope}` : undefined}
-                  >
-                    <div className="flex items-center gap-3">
-                      {item.icon}
-                      <span className="text-sm font-medium">{item.label}</span>
-                    </div>
-                    {item.memberScope && (
-                      <span className="text-[9px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                        {item.memberScope}
-                      </span>
-                    )}
-                  </div>
-                );
-              }
+            {/* Active Modules */}
+            {activeNavItems.map((item) => {
+              const isSelected = pathname === item.href || pathname?.startsWith(item.href + '/');
 
               return (
                 <Link
                   key={item.label}
                   href={item.href}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                    isActive
+                    isSelected
                       ? 'bg-emerald-50 text-emerald-800 font-bold shadow-sm shadow-emerald-50 border border-emerald-200/60'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={isActive ? 'text-emerald-600' : 'text-slate-400'}>
+                    <span className={isSelected ? 'text-emerald-600' : 'text-slate-400'}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -173,6 +138,23 @@ export const Sidebar: React.FC = () => {
                 </Link>
               );
             })}
+
+            {/* Other Platform Modules from Figma */}
+            <div className="pt-3 pb-1">
+              <div className="h-px bg-slate-100 mx-3"></div>
+            </div>
+
+            {otherNavItems.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between px-3 py-2 rounded-lg text-slate-400 opacity-50 cursor-not-allowed"
+              >
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+              </div>
+            ))}
           </nav>
         </div>
       </div>
@@ -186,7 +168,7 @@ export const Sidebar: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-bold text-slate-900 leading-tight">SportLK Admin</p>
-              <p className="text-[11px] text-slate-500 leading-tight">Platform admin</p>
+              <p className="text-[11px] text-slate-500 leading-tight">Platform administrator</p>
             </div>
           </div>
           <button
