@@ -4,21 +4,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Header } from '../components/Header';
 import { matchesApi } from '../services/api';
 import { adminSocket } from '../services/socket';
-import { Match, MatchStatus, CreateMatchDto, UpdateScoreDto } from '../types';
-import { ScheduleMatchModal } from './components/ScheduleMatchModal';
-import { LiveScoreModal } from './components/LiveScoreModal';
-import { DeleteMatchModal } from './components/DeleteMatchModal';
+import { Match, MatchStatus } from '../types';
+import { MatchDetailsModal } from './components/MatchDetailsModal';
 import {
-  Plus,
   Search,
   Calendar,
-  Radio,
   RefreshCw,
-  Trash2,
-  CheckCircle2,
+  Eye,
   AlertCircle,
-  Play,
-  CheckCircle,
+  Sparkles,
 } from 'lucide-react';
 
 export default function MatchesPage() {
@@ -31,18 +25,8 @@ export default function MatchesPage() {
   const [selectedStatus, setSelectedStatus] = useState<MatchStatus | 'ALL'>('ALL');
   const [selectedSport, setSelectedSport] = useState<string>('ALL');
 
-  // Modals
-  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
-  const [scoringMatch, setScoringMatch] = useState<Match | null>(null);
-  const [deletingMatch, setDeletingMatch] = useState<Match | null>(null);
-
-  // Notification Toast
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
-  };
+  // Details Modal
+  const [detailsMatch, setDetailsMatch] = useState<Match | null>(null);
 
   // 1. Fetch real matches from NestJS backend
   const fetchMatches = useCallback(async () => {
@@ -68,13 +52,15 @@ export default function MatchesPage() {
       setMatches((prev) =>
         prev.map((m) => {
           if (m.id === payload.matchId && payload.score) {
-            return {
+            const updated = {
               ...m,
               score: {
                 ...m.score,
                 ...payload.score,
               },
             };
+            setDetailsMatch((curr) => (curr && curr.id === payload.matchId ? updated : curr));
+            return updated;
           }
           return m;
         })
@@ -84,43 +70,17 @@ export default function MatchesPage() {
     // Listen to real-time status updates
     adminSocket.onStatusChanged((payload) => {
       setMatches((prev) =>
-        prev.map((m) => (m.id === payload.matchId && payload.match ? { ...m, ...payload.match } : m))
+        prev.map((m) => {
+          if (m.id === payload.matchId && payload.match) {
+            const updated = { ...m, ...payload.match };
+            setDetailsMatch((curr) => (curr && curr.id === payload.matchId ? updated : curr));
+            return updated;
+          }
+          return m;
+        })
       );
     });
   }, [fetchMatches]);
-
-  // 2. Schedule Match
-  const handleScheduleMatch = async (dto: CreateMatchDto) => {
-    await matchesApi.create(dto);
-    showToast('Match fixture scheduled successfully in MySQL!');
-    await fetchMatches();
-  };
-
-  // 3. Save Score
-  const handleSaveScore = async (matchId: string, scoreDto: UpdateScoreDto) => {
-    await matchesApi.updateScore(matchId, scoreDto);
-    showToast('Score updated and broadcasted to mobile users!');
-    await fetchMatches();
-  };
-
-  // 4. Update Status (e.g. SCHEDULED -> LIVE or LIVE -> COMPLETED)
-  const handleUpdateStatus = async (matchId: string, status: MatchStatus) => {
-    await matchesApi.updateStatus(matchId, status);
-    showToast(`Match status updated to ${status}`);
-    await fetchMatches();
-  };
-
-  // 5. Delete Match
-  const handleDeleteConfirm = async () => {
-    if (!deletingMatch) return;
-    try {
-      await matchesApi.delete(deletingMatch.id);
-      showToast('Match fixture cancelled successfully');
-      await fetchMatches();
-    } catch (err: any) {
-      alert(`Failed to delete match: ${err.message}`);
-    }
-  };
 
   // Client-side search filtering
   const filteredMatches = matches.filter((m) => {
@@ -134,39 +94,25 @@ export default function MatchesPage() {
 
   // Calculate live stats
   const totalCount = matches.length;
-  const liveCount = matches.filter((m) => m.matchStatus === 'LIVE').length;
+  const liveMatches = matches.filter((m) => m.matchStatus === 'LIVE');
+  const liveCount = liveMatches.length;
   const completedCount = matches.filter((m) => m.matchStatus === 'COMPLETED').length;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
+      {/* Header - Strictly Monitoring & Oversight */}
       <Header
-        title="Matches"
-        subtitle="Schedule fixtures, control live scoreboards, and broadcast scores to mobile users"
+        title="Matches & Live Monitoring"
+        subtitle="Live oversight of ongoing matches, scores, and scheduled fixtures across Sri Lanka"
         actionButton={
-          <button
-            onClick={() => setIsScheduleOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm shadow-emerald-500/20 transition-all cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            Schedule Match
-          </button>
+          <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Live Sync Active</span>
+          </div>
         }
       />
 
       <div className="p-8 max-w-7xl mx-auto space-y-6">
-        {/* Toast Alert */}
-        {toastMessage && (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-sm animate-in fade-in duration-200">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>{toastMessage}</span>
-            </div>
-            <button onClick={() => setToastMessage(null)} className="text-emerald-700 hover:text-emerald-900">
-              ✕
-            </button>
-          </div>
-        )}
 
         {/* Backend Offline Alert */}
         {error && (
@@ -179,7 +125,7 @@ export default function MatchesPage() {
             </div>
             <button
               onClick={fetchMatches}
-              className="px-3 py-1 rounded-lg bg-amber-200/60 hover:bg-amber-200 font-bold text-amber-900 text-xs"
+              className="px-3 py-1 rounded-lg bg-amber-200/60 hover:bg-amber-200 font-bold text-amber-900 text-xs cursor-pointer"
             >
               Retry
             </button>
@@ -191,29 +137,105 @@ export default function MatchesPage() {
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Fixtures</p>
             <p className="text-2xl font-black text-slate-900 mt-1">{totalCount}</p>
-            <p className="text-xs text-slate-500 mt-1">Real fixtures in MySQL database</p>
+            <p className="text-xs text-slate-500 mt-1">Scheduled by Event Organizers</p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Live Matches</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Ongoing Matches</p>
               {liveCount > 0 && (
                 <span className="flex items-center gap-1 text-[10px] font-extrabold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                  BROADCASTING
+                  LIVE NOW
                 </span>
               )}
             </div>
             <p className="text-2xl font-black text-red-600 mt-1">{liveCount}</p>
-            <p className="text-xs text-slate-500 mt-1">Active WebSocket room subscriptions</p>
+            <p className="text-xs text-slate-500 mt-1">Real-time WebSocket score stream</p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Completed Fixtures</p>
             <p className="text-2xl font-black text-slate-900 mt-1">{completedCount}</p>
-            <p className="text-xs text-slate-500 mt-1">Final scores recorded</p>
+            <p className="text-xs text-slate-500 mt-1">Final results recorded</p>
           </div>
         </div>
+
+        {/* ONGOING MATCHES SHOWCASE (Featured Live Matches) */}
+        {liveCount > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+                <h2 className="text-sm font-black uppercase tracking-wider text-slate-900">
+                  Ongoing Matches ({liveCount})
+                </h2>
+              </div>
+              <span className="text-xs font-bold text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-100">
+                ● Live Scoreboard Broadcast
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {liveMatches.map((m) => (
+                <div
+                  key={m.id}
+                  className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between text-xs text-slate-300 mb-3">
+                    <span className="font-bold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                      {m.sportType} • {m.tournament?.tournamentName || 'Live Encounter'}
+                    </span>
+                    <span className="text-slate-400">
+                      {m.venue?.venueName ? `📍 ${m.venue.venueName}` : 'Live Ground'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-5 items-center py-2 text-center">
+                    <div className="col-span-2 text-left">
+                      <p className="font-black text-sm text-white truncate">
+                        {m.homeTeam?.teamName || 'Home'}
+                      </p>
+                      <p className="text-2xl font-black text-emerald-400 mt-1">
+                        {m.score?.homeTeamScoreDisplay || '0'}
+                      </p>
+                    </div>
+                    <div className="col-span-1 text-slate-500 text-xs font-black">VS</div>
+                    <div className="col-span-2 text-right">
+                      <p className="font-black text-sm text-white truncate">
+                        {m.awayTeam?.teamName || 'Away'}
+                      </p>
+                      <p className="text-2xl font-black text-blue-400 mt-1">
+                        {m.score?.awayTeamScoreDisplay || '0'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {m.score?.detailedScorecardJson?.currentStatus && (
+                    <div className="mt-3 pt-2.5 border-t border-slate-700/60 text-xs text-slate-300 italic flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span className="truncate">{m.score.detailedScorecardJson.currentStatus}</span>
+                    </div>
+                  )}
+
+                  <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <span className="text-[11px] text-slate-400">
+                      Live sync active
+                    </span>
+                    <button
+                      onClick={() => setDetailsMatch(m)}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Inspect Match</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filter and Search Bar */}
         <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
@@ -248,7 +270,7 @@ export default function MatchesPage() {
                 <button
                   key={status}
                   onClick={() => setSelectedStatus(status)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                     selectedStatus === status
                       ? status === 'LIVE'
                         ? 'bg-red-600 text-white shadow-xs'
@@ -265,7 +287,7 @@ export default function MatchesPage() {
             <button
               onClick={fetchMatches}
               title="Refresh from backend"
-              className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors"
+              className="p-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
             </button>
@@ -276,8 +298,10 @@ export default function MatchesPage() {
         <div className="rounded-2xl bg-white border border-slate-200/80 shadow-xs overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h2 className="font-bold text-slate-900 text-base">Match Fixtures</h2>
-              <p className="text-xs text-slate-400 font-medium">Real fixtures from MySQL <code>matches</code> table</p>
+              <h2 className="font-bold text-slate-900 text-base">Match Fixtures Directory</h2>
+              <p className="text-xs text-slate-400 font-medium">
+                Fixtures scheduled and operated by Event Organizers & Match Scorers
+              </p>
             </div>
             <span className="text-xs text-slate-500 font-bold bg-slate-100 px-2.5 py-1 rounded-full">
               {filteredMatches.length} {filteredMatches.length === 1 ? 'match' : 'matches'}
@@ -291,7 +315,7 @@ export default function MatchesPage() {
               <p className="text-xs text-slate-400 mt-1">Connecting to NestJS API & WebSocket Gateway</p>
             </div>
           ) : filteredMatches.length === 0 ? (
-            /* Clean Empty State when no mock data is entered */
+            /* Clean Empty State */
             <div className="p-16 text-center max-w-md mx-auto">
               <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4">
                 <Calendar className="w-8 h-8" />
@@ -299,16 +323,9 @@ export default function MatchesPage() {
               <h3 className="font-extrabold text-slate-900 text-lg mb-1">
                 No match fixtures found
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed mb-6">
-                No matches currently match your filter in MySQL. Click the button below to schedule your first fixture at a sports ground.
+              <p className="text-xs text-slate-500 leading-relaxed">
+                No matches match your current filter. When Event Organizers create and schedule matches in tournaments, they will appear here automatically for administrative monitoring.
               </p>
-              <button
-                onClick={() => setIsScheduleOpen(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Schedule First Match
-              </button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -316,11 +333,11 @@ export default function MatchesPage() {
                 <thead className="bg-slate-50 text-slate-400 uppercase text-[11px] font-bold border-b border-slate-100">
                   <tr>
                     <th className="px-6 py-3.5">Match Details</th>
-                    <th className="px-6 py-3.5">Tournament</th>
+                    <th className="px-6 py-3.5">Tournament / Event</th>
                     <th className="px-6 py-3.5">Venue Ground</th>
                     <th className="px-6 py-3.5">Schedule Time</th>
                     <th className="px-6 py-3.5">Current Score / Status</th>
-                    <th className="px-6 py-3.5 text-right">Actions</th>
+                    <th className="px-6 py-3.5 text-right">Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
@@ -351,7 +368,7 @@ export default function MatchesPage() {
 
                         {/* Tournament */}
                         <td className="px-6 py-4 text-xs font-semibold text-slate-700">
-                          {m.tournament?.tournamentName || 'Friendly / League Match'}
+                          {m.tournament?.tournamentName || 'Friendly / Exhibition'}
                         </td>
 
                         {/* Venue Ground */}
@@ -395,50 +412,16 @@ export default function MatchesPage() {
                           )}
                         </td>
 
-                        {/* Actions */}
+                        {/* Action - View Details */}
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {/* Live Score Controller */}
-                            <button
-                              onClick={() => setScoringMatch(m)}
-                              title="Open Live Score Controller"
-                              className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <Radio className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Score Controller</span>
-                            </button>
-
-                            {/* Quick Start Match */}
-                            {isScheduled && (
-                              <button
-                                onClick={() => handleUpdateStatus(m.id, 'LIVE')}
-                                title="Start Match (Set to LIVE)"
-                                className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                              >
-                                <Play className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {/* Quick Finish Match */}
-                            {isLive && (
-                              <button
-                                onClick={() => handleUpdateStatus(m.id, 'COMPLETED')}
-                                title="Finish Match (Set to COMPLETED)"
-                                className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-                              >
-                                <CheckCircle className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-
-                            {/* Cancel Match */}
-                            <button
-                              onClick={() => setDeletingMatch(m)}
-                              title="Cancel Match"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
+                          <button
+                            onClick={() => setDetailsMatch(m)}
+                            title="View Full Match Details"
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-600" />
+                            <span>View Details</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -450,27 +433,11 @@ export default function MatchesPage() {
         </div>
       </div>
 
-      {/* Schedule Match Modal */}
-      <ScheduleMatchModal
-        isOpen={isScheduleOpen}
-        onClose={() => setIsScheduleOpen(false)}
-        onSchedule={handleScheduleMatch}
-      />
-
-      {/* Live Score Controller Modal */}
-      <LiveScoreModal
-        match={scoringMatch}
-        isOpen={!!scoringMatch}
-        onClose={() => setScoringMatch(null)}
-        onSaveScore={handleSaveScore}
-        onUpdateStatus={handleUpdateStatus}
-      />
-
-      {/* Cancel Match Confirm Modal */}
-      <DeleteMatchModal
-        match={deletingMatch}
-        onClose={() => setDeletingMatch(null)}
-        onConfirm={handleDeleteConfirm}
+      {/* Match Details Modal */}
+      <MatchDetailsModal
+        match={detailsMatch}
+        isOpen={!!detailsMatch}
+        onClose={() => setDetailsMatch(null)}
       />
     </div>
   );
