@@ -11,22 +11,30 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost
 
 export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...options.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        ...options.headers,
+      },
+    });
+  } catch (netErr: any) {
+    throw new Error(`Cannot connect to backend at ${API_BASE_URL}. Ensure NestJS backend is running.`);
+  }
 
   if (!res.ok) {
-    let errMessage = res.statusText;
+    const text = await res.text();
+    let errMessage = res.statusText || `HTTP ${res.status}`;
     try {
-      const errJson = await res.json();
+      const errJson = JSON.parse(text);
       errMessage = errJson.message || JSON.stringify(errJson);
     } catch {
-      errMessage = await res.text();
+      errMessage = text && text.length < 200 && !text.includes('<!DOCTYPE') 
+        ? text 
+        : `Backend returned status ${res.status} (${res.statusText || 'Not Found'})`;
     }
     throw new Error(Array.isArray(errMessage) ? errMessage.join(', ') : errMessage);
   }
