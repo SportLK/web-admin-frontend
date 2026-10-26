@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { TeamDetailModal } from '@/components/TeamDetailModal';
 import { SuspendTeamModal } from '@/components/SuspendTeamModal';
 import { INITIAL_TEAMS, Team } from '@/data/mockData';
+import { adminApi } from '@/services/adminApi';
 import {
   Search,
   Ban,
@@ -17,6 +18,23 @@ export default function TeamsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
+
+  // Load live teams from NestJS backend on mount
+  useEffect(() => {
+    let mounted = true;
+    adminApi.getTeams()
+      .then((data) => {
+        if (mounted && data && Array.isArray(data) && data.length > 0) {
+          setTeams(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend connection notice, operating with current team data:', err.message);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Modals state
   const [selectedTeamForView, setSelectedTeamForView] = useState<Team | null>(null);
@@ -47,12 +65,13 @@ export default function TeamsPage() {
   }, [teams, searchQuery, selectedSport, selectedStatus]);
 
   // Handle Suspension
-  const handleConfirmSuspension = (
+  const handleConfirmSuspension = async (
     teamId: string,
     reason: string,
     duration: string,
     notes: string
   ) => {
+    // Optimistic UI update
     setTeams((prev) =>
       prev.map((t) => {
         if (t.id === teamId) {
@@ -60,7 +79,7 @@ export default function TeamsPage() {
             ...t,
             status: 'Suspended',
             suspensionDetails: {
-              suspendedAt: '19 Oct 2026',
+              suspendedAt: 'Just now',
               suspendedBy: 'SportLK Admin',
               reason,
               duration,
@@ -79,7 +98,7 @@ export default function TeamsPage() {
               ...prev,
               status: 'Suspended',
               suspensionDetails: {
-                suspendedAt: '19 Oct 2026',
+                suspendedAt: 'Just now',
                 suspendedBy: 'SportLK Admin',
                 reason,
                 duration,
@@ -89,10 +108,23 @@ export default function TeamsPage() {
           : null
       );
     }
+
+    try {
+      const updated = await adminApi.suspendTeam(teamId, { reason, duration, notes });
+      if (updated) {
+        setTeams((prev) => prev.map((t) => (t.id === teamId ? updated : t)));
+        if (selectedTeamForView && selectedTeamForView.id === teamId) {
+          setSelectedTeamForView(updated);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to suspend team on backend:', err);
+    }
   };
 
   // Handle Reactivation
-  const handleReactivateTeam = (teamId: string) => {
+  const handleReactivateTeam = async (teamId: string) => {
+    // Optimistic UI update
     setTeams((prev) =>
       prev.map((t) => {
         if (t.id === teamId) {
@@ -117,10 +149,23 @@ export default function TeamsPage() {
           : null
       );
     }
+
+    try {
+      const updated = await adminApi.reactivateTeam(teamId);
+      if (updated) {
+        setTeams((prev) => prev.map((t) => (t.id === teamId ? updated : t)));
+        if (selectedTeamForView && selectedTeamForView.id === teamId) {
+          setSelectedTeamForView(updated);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to reactivate team on backend:', err);
+    }
   };
 
   // Remove player from squad
-  const handleRemoveMember = (teamId: string, memberId: string) => {
+  const handleRemoveMember = async (teamId: string, memberId: string) => {
+    // Optimistic UI update
     setTeams((prev) =>
       prev.map((t) => {
         if (t.id === teamId) {
@@ -145,6 +190,12 @@ export default function TeamsPage() {
             }
           : null
       );
+    }
+
+    try {
+      await adminApi.removeMember(teamId, memberId);
+    } catch (err) {
+      console.error('Failed to remove member on backend:', err);
     }
   };
 
