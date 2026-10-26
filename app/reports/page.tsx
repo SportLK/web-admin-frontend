@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { ReportReviewModal } from '@/components/ReportReviewModal';
 import { SuspendTeamModal } from '@/components/SuspendTeamModal';
 import { INITIAL_REPORTS, INITIAL_TEAMS, TeamReport, Team } from '@/data/mockData';
+import { adminApi } from '@/services/adminApi';
 import {
   Flag,
   AlertTriangle,
@@ -24,16 +25,34 @@ export default function ReportsPage() {
   const [suspensionTargetTeam, setSuspensionTargetTeam] = useState<Team | null>(null);
   const [activeTab, setActiveTab] = useState<'reports' | 'analytics'>('reports');
 
+  // Load live reports from NestJS backend on mount
+  useEffect(() => {
+    let mounted = true;
+    adminApi.getReports()
+      .then((data) => {
+        if (mounted && data && Array.isArray(data) && data.length > 0) {
+          setReports(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend connection notice, operating with current reports data:', err.message);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Metrics
   const openReports = reports.filter((r) => r.status === 'Open').length;
   const inReviewReports = reports.filter((r) => r.status === 'In Review').length;
   const resolvedReports = reports.filter((r) => r.status === 'Resolved').length;
 
-  const handleResolveReport = (
+  const handleResolveReport = async (
     reportId: string,
     status: TeamReport['status'],
     notes: string
   ) => {
+    // Optimistic update
     setReports((prev) =>
       prev.map((r) =>
         r.id === reportId
@@ -45,6 +64,18 @@ export default function ReportsPage() {
           : r
       )
     );
+
+    try {
+      const statusEnum =
+        status === 'Resolved'
+          ? 'RESOLVED'
+          : status === 'Dismissed'
+          ? 'DISMISSED'
+          : 'IN_REVIEW';
+      await adminApi.updateReport(reportId, { status: statusEnum, resolutionNotes: notes });
+    } catch (err) {
+      console.error('Failed to update report on backend:', err);
+    }
   };
 
   const handleTriggerTeamSuspension = (teamId: string) => {
