@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { TeamDetailModal } from '@/components/TeamDetailModal';
@@ -11,6 +11,7 @@ import {
   Search,
   Ban,
   RotateCcw,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function TeamsPage() {
@@ -19,22 +20,38 @@ export default function TeamsPage() {
   const [selectedSport, setSelectedSport] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
 
-  // Load live teams from NestJS backend on mount
-  useEffect(() => {
-    let mounted = true;
-    adminApi.getTeams()
-      .then((data) => {
-        if (mounted && data && Array.isArray(data) && data.length > 0) {
-          setTeams(data);
-        }
-      })
-      .catch((err) => {
-        console.warn('Backend connection notice, operating with current team data:', err.message);
-      });
-    return () => {
-      mounted = false;
-    };
+  // Real-time synchronization state
+  const [isLiveConnected, setIsLiveConnected] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Fetch real-time teams data
+  const fetchLiveTeams = useCallback(async (silent = false) => {
+    if (!silent) setIsSyncing(true);
+    try {
+      const data = await adminApi.getTeams();
+      if (Array.isArray(data) && data.length > 0) {
+        setTeams(data);
+        setIsLiveConnected(true);
+      } else {
+        setIsLiveConnected(true);
+      }
+      setLastSynced(new Date());
+    } catch {
+      setIsLiveConnected(false);
+    } finally {
+      if (!silent) setIsSyncing(false);
+    }
   }, []);
+
+  // Real-time polling every 8 seconds
+  useEffect(() => {
+    fetchLiveTeams();
+    const interval = setInterval(() => {
+      fetchLiveTeams(true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [fetchLiveTeams]);
 
   // Modals state
   const [selectedTeamForView, setSelectedTeamForView] = useState<Team | null>(null);
@@ -216,10 +233,35 @@ export default function TeamsPage() {
               </p>
             </div>
 
+            {/* Real-time Data Sync Controls */}
             <div className="flex items-center gap-2.5">
-              <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-lime-100 text-lime-900 border border-lime-300">
-                Member 2 Module
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  isLiveConnected
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isLiveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'
+                  }`}
+                />
+                {isLiveConnected ? 'Real-Time Sync' : 'Live Sync Ready'}
               </span>
+
+              <button
+                type="button"
+                onClick={() => fetchLiveTeams(false)}
+                disabled={isSyncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-zinc-700 hover:bg-gray-50 shadow-2xs transition-colors disabled:opacity-50"
+                title="Refresh real-time data"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 text-zinc-500 ${isSyncing ? 'animate-spin text-lime-600' : ''}`}
+                />
+                <span>Sync Now</span>
+              </button>
             </div>
           </div>
 
