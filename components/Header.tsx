@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Bell, ChevronRight } from 'lucide-react';
 
@@ -9,6 +9,36 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ breadcrumbs }) => {
+  const [currentDateTime, setCurrentDateTime] = useState<{
+    dateStr: string;
+    timeStr: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      const dateStr = new Intl.DateTimeFormat('en-GB', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      }).format(now);
+
+      const timeStr = new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }).format(now);
+
+      setCurrentDateTime({ dateStr, timeStr });
+    };
+
+    updateDateTime();
+    const timer = setInterval(updateDateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <header className="h-16 border-b border-gray-200/80 bg-white/80 backdrop-blur-md px-8 flex items-center justify-between sticky top-0 z-20">
       {/* Breadcrumbs */}
@@ -28,12 +58,24 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumbs }) => {
         ))}
       </nav>
 
-      {/* Right Controls: Date, Notifications, Profile */}
+      {/* Right Controls: Date & Real-time Clock, Notifications, Profile */}
       <div className="flex items-center gap-4">
-        {/* Date Display */}
-        <span className="text-xs text-gray-400 font-medium hidden sm:inline-block">
-          Wednesday, 7 October 2026
-        </span>
+        {/* Real-time Date & Clock Display */}
+        {currentDateTime ? (
+          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500 font-medium">
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/60">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              LIVE
+            </span>
+            <span className="text-zinc-700 font-medium">{currentDateTime.dateStr}</span>
+            <span className="text-gray-300">·</span>
+            <span className="font-mono text-zinc-900 font-semibold">{currentDateTime.timeStr}</span>
+          </div>
+        ) : (
+          <span className="text-xs text-gray-400 font-medium hidden sm:inline-block">
+            Loading...
+          </span>
+        )}
 
         <div className="h-4 w-px bg-gray-200 hidden sm:block" />
 
