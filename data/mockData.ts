@@ -53,6 +53,12 @@ export interface TeamReport {
   resolutionNotes?: string;
 }
 
+export const getRelativeDateStr = (daysAgo: number): string => {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(d);
+};
+
 export const INITIAL_TEAMS: Team[] = [
   {
     id: '1',
@@ -324,7 +330,7 @@ export const INITIAL_TEAMS: Team[] = [
     initials: 'MB',
     createdAt: '18 Feb 2026',
     suspensionDetails: {
-      suspendedAt: '05 Oct 2026',
+      suspendedAt: getRelativeDateStr(2),
       suspendedBy: 'SportLK Admin',
       reason: 'Misleading information / Ineligible roster participant',
       duration: '30 Days',
@@ -355,7 +361,7 @@ export const INITIAL_REPORTS: TeamReport[] = [
     reporterRole: 'Team Manager',
     reason: 'Misleading information',
     details: 'Opponent roster list displayed a player who had not formally completed transfer verification.',
-    receivedDate: '07 Oct, 2026',
+    receivedDate: getRelativeDateStr(0),
     status: 'Open',
     severity: 'Medium',
   },
@@ -368,7 +374,7 @@ export const INITIAL_REPORTS: TeamReport[] = [
     reporterRole: 'Tournament Organizer',
     reason: 'Roster eligibility dispute',
     details: 'Player was not registered on the SportLK platform before match start time.',
-    receivedDate: '05 Oct, 2026',
+    receivedDate: getRelativeDateStr(1),
     status: 'In Review',
     severity: 'High',
   },
@@ -381,7 +387,7 @@ export const INITIAL_REPORTS: TeamReport[] = [
     reporterRole: 'Team Manager',
     reason: 'Unsportsmanlike conduct',
     details: 'Dispute occurred during late substitution in 2nd half. Requested referee review of roster roles.',
-    receivedDate: '02 Oct, 2026',
+    receivedDate: getRelativeDateStr(3),
     status: 'Resolved',
     severity: 'Low',
     resolutionNotes: 'Reviewed referee scorecard. Clarified substitution protocol with Negombo FC manager.',
@@ -395,7 +401,7 @@ export const INITIAL_REPORTS: TeamReport[] = [
     reporterRole: 'Venue Coordinator',
     reason: 'Inactive / Forfeit',
     details: 'Team arrived 30 minutes after scheduled kickoff date for friendly challenge.',
-    receivedDate: '29 Sep, 2026',
+    receivedDate: getRelativeDateStr(7),
     status: 'Dismissed',
     severity: 'Low',
     resolutionNotes: 'Adverse weather conditions confirmed along Southern Expressway. Rescheduled challenge.',
