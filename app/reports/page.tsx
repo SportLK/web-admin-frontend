@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { ReportReviewModal } from '@/components/ReportReviewModal';
@@ -17,6 +17,7 @@ import {
   BarChart3,
   ShieldAlert,
   FileSpreadsheet,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -25,22 +26,38 @@ export default function ReportsPage() {
   const [suspensionTargetTeam, setSuspensionTargetTeam] = useState<Team | null>(null);
   const [activeTab, setActiveTab] = useState<'reports' | 'analytics'>('reports');
 
-  // Load live reports from NestJS backend on mount
-  useEffect(() => {
-    let mounted = true;
-    adminApi.getReports()
-      .then((data) => {
-        if (mounted && data && Array.isArray(data) && data.length > 0) {
-          setReports(data);
-        }
-      })
-      .catch((err) => {
-        console.warn('Backend connection notice, operating with current reports data:', err.message);
-      });
-    return () => {
-      mounted = false;
-    };
+  // Real-time synchronization state
+  const [isLiveConnected, setIsLiveConnected] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Fetch real-time reports data
+  const fetchLiveReports = useCallback(async (silent = false) => {
+    if (!silent) setIsSyncing(true);
+    try {
+      const data = await adminApi.getReports();
+      if (Array.isArray(data) && data.length > 0) {
+        setReports(data);
+        setIsLiveConnected(true);
+      } else {
+        setIsLiveConnected(true);
+      }
+      setLastSynced(new Date());
+    } catch {
+      setIsLiveConnected(false);
+    } finally {
+      if (!silent) setIsSyncing(false);
+    }
   }, []);
+
+  // Real-time polling every 8 seconds
+  useEffect(() => {
+    fetchLiveReports();
+    const interval = setInterval(() => {
+      fetchLiveReports(true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [fetchLiveReports]);
 
   // Metrics
   const openReports = reports.filter((r) => r.status === 'Open').length;
@@ -126,11 +143,39 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  isLiveConnected
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-zinc-100 text-zinc-600 border-zinc-200'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isLiveConnected ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'
+                  }`}
+                />
+                {isLiveConnected ? 'Real-Time Sync' : 'Live Sync Ready'}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => fetchLiveReports(false)}
+                disabled={isSyncing}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-zinc-700 hover:bg-gray-50 shadow-2xs transition-colors disabled:opacity-50"
+                title="Refresh real-time data"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 text-zinc-500 ${isSyncing ? 'animate-spin text-lime-600' : ''}`}
+                />
+                <span>Sync Now</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleExportCSV}
-                className="px-3.5 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-zinc-800 hover:bg-gray-50 shadow-2xs flex items-center gap-2 transition-colors"
+                className="px-3.5 py-1.5 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-zinc-800 hover:bg-gray-50 shadow-2xs flex items-center gap-2 transition-colors"
               >
                 <Download className="w-3.5 h-3.5 text-gray-500" />
                 Export Reports CSV
@@ -280,7 +325,7 @@ export default function ReportsPage() {
               </div>
 
               <div className="p-4 px-6 border-t border-gray-100 bg-gray-50/40 flex items-center justify-between text-xs text-gray-500">
-                <span>Member 2: Team Concerns & Dispute Moderation</span>
+                <span>Team Concerns & Dispute Moderation</span>
                 <span className="text-[11px] text-gray-400">Total {reports.length} records</span>
               </div>
             </div>
