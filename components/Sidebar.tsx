@@ -16,7 +16,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Sparkles,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -121,17 +120,8 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      {/* Member 2 Badge & Admin Profile */}
-      <div className="space-y-3 pt-4 border-t border-gray-100">
-        <div className="bg-lime-50/70 border border-lime-200/80 rounded-xl p-2.5 flex items-center gap-2">
-          <div className="w-5 h-5 rounded-md bg-[#D7FB38] flex items-center justify-center text-zinc-950 shrink-0">
-            <Sparkles className="w-3 h-3 text-zinc-950" />
-          </div>
-          <div className="text-[11px] leading-tight text-zinc-700">
-            <span className="font-bold text-zinc-900 block">Member 2 Scope</span>
-            Teams, Roster, Suspension & Reports
-          </div>
-        </div>
+      {/* Admin Profile */}
+      <div className="pt-4 border-t border-gray-100">
 
         {/* Admin User Card (from Figma) */}
         <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center justify-between shadow-2xs hover:border-gray-300 transition-colors">
