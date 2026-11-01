@@ -249,6 +249,20 @@ export default function Home() {
           ))}
         </nav>
 
+        <div className="nav-label">OPERATIONS</div>
+        <nav className="main-nav" aria-label="Operations navigation">
+          {[
+            { href: "/matches", label: "Matches", icon: "◷" },
+            { href: "/teams", label: "Teams", icon: "♧" },
+            { href: "/venues", label: "Venues", icon: "⌖" },
+            { href: "/reports", label: "Reports", icon: "⚑" },
+          ].map((item) => (
+            <a key={item.href} className="nav-item" href={item.href}>
+              <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
+            </a>
+          ))}
+        </nav>
+
         <div className="sidebar-foot">
           <div className="help-card"><span className="help-spark">✳</span><b>Need a hand?</b><p>Visit the admin guide for a quick walkthrough.</p><button onClick={() => notify("The admin guide is coming soon")}>Open help centre <span>↗</span></button></div>
           <button className="admin-account" onClick={() => accessToken ? signOut() : setSignInOpen(true)}>
