@@ -4,34 +4,34 @@
   <strong>A web control room for managing the SportLK sports community.</strong>
 </p>
 
-The SportLK admin website is the browser-based workspace for platform administrators. It is part of a wider platform for sports events, teams, tournaments, match results, and community activity in Sri Lanka.
+The SportLK admin website is the browser-based workspace for platform administrators. It supports member and community workflows alongside team, venue, match, and report administration.
 
 ## 🧰 Technology
 
 | Layer | Technology |
 | --- | --- |
 | Web application | Next.js 16 · React · TypeScript |
-| Database | MySQL, accessed by server-side application code |
-| Mobile client | [React Native](https://github.com/SportLK/mobile-frontend) |
+| Live updates | Socket.IO client |
 | API service | [NestJS backend](https://github.com/SportLK/backend) |
+| Mobile client | [Expo / React Native](https://github.com/SportLK/mobile-frontend) |
+| Database | MySQL, accessed by the backend |
 
-Keep database credentials and queries in server-side code. Never expose MySQL credentials to browser code.
+The website communicates with the backend API. Database credentials and queries belong on the server side; do not expose MySQL credentials to browser code.
 
-## ✨ Planned admin capabilities
+## ✨ Admin capabilities
 
-- Review and manage users, teams, and sports events
-- Moderate community content and respond to reports
-- Review match results and resolve score disputes
-- View platform activity, transaction records, and analytics
-
-These describe the intended scope. This repository currently contains an initial Next.js scaffold; SportLK admin workflows and MySQL integration are still to be implemented.
+- Review and manage members, teams, and venues
+- Monitor matches and live scores
+- Moderate community content and resolve reports
+- Review team and organizer workflows
+- View platform activity and statistics
 
 ## 🚀 Run locally
 
 ### Requirements
 
 - Node.js and npm
-- Access to a MySQL instance when database integration is added
+- The SportLK backend for live data; preview mode is available without an admin session
 
 Install dependencies:
 
@@ -39,15 +39,17 @@ Install dependencies:
 npm ci
 ```
 
+Set `NEXT_PUBLIC_API_URL` in `.env.local` to the backend API URL. The default local URL is `http://localhost:3000/api/v1`.
+
 Start the development server:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3001](http://localhost:3001).
 
-## 🧪 Available scripts
+### Available scripts
 
 | Command | Purpose |
 | --- | --- |
