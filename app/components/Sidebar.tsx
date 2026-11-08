@@ -27,6 +27,18 @@ export const Sidebar: React.FC = () => {
 
   const activeNavItems: NavItem[] = [
     {
+      label: 'Tournaments',
+      href: '/tournaments',
+      icon: <Trophy className="w-5 h-5" />,
+      isActiveRoute: true,
+    },
+    {
+      label: 'Organizer Approvals',
+      href: '/organizers',
+      icon: <ShieldCheck className="w-5 h-5" />,
+      isActiveRoute: true,
+    },
+    {
       label: 'Matches',
       href: '/matches',
       icon: <Calendar className="w-5 h-5" />,
@@ -42,16 +54,10 @@ export const Sidebar: React.FC = () => {
 
   const otherNavItems: NavItem[] = [
     {
-      label: 'Tournaments',
-      href: '#',
-      icon: <Trophy className="w-5 h-5" />,
-      isActiveRoute: false,
-    },
-    {
       label: 'Teams',
-      href: '#',
+      href: '/teams',
       icon: <Users className="w-5 h-5" />,
-      isActiveRoute: false,
+      isActiveRoute: true,
     },
     {
       label: 'Users',
@@ -117,11 +123,10 @@ export const Sidebar: React.FC = () => {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
-                    isSelected
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${isSelected
                       ? 'bg-emerald-50 text-emerald-800 font-bold shadow-sm shadow-emerald-50 border border-emerald-200/60'
                       : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className={isSelected ? 'text-emerald-600' : 'text-slate-400'}>
