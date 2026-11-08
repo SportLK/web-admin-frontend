@@ -24,9 +24,9 @@ export const Sidebar: React.FC = () => {
   const navigation = [
     { name: 'Overview', href: '/overview', icon: LayoutDashboard, disabled: true },
     { name: 'Users', href: '/users', icon: Users, disabled: true },
-    { name: 'Role applications', href: '/role-applications', icon: BadgeCheck, disabled: true },
+    { name: 'Organizer approvals', href: '/organizers', icon: BadgeCheck, isMember3: true },
     { name: 'Teams', href: '/teams', icon: Shield, isMember2: true },
-    { name: 'Tournaments', href: '/tournaments', icon: Trophy, disabled: true },
+    { name: 'Tournaments', href: '/tournaments', icon: Trophy, isMember3: true },
     { name: 'Matches', href: '/matches', icon: Swords, disabled: true },
     { name: 'Venues', href: '/venues', icon: MapPin, disabled: true },
     { name: 'Community', href: '/community', icon: MessageSquare, disabled: true },
@@ -112,6 +112,17 @@ export const Sidebar: React.FC = () => {
                     }`}
                   >
                     M2
+                  </span>
+                )}
+                {item.isMember3 && (
+                  <span
+                    className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full ${
+                      isActive
+                        ? 'bg-zinc-950 text-[#D7FB38]'
+                        : 'bg-emerald-100 text-emerald-800 group-hover:bg-emerald-200'
+                    }`}
+                  >
+                    M3
                   </span>
                 )}
               </Link>
