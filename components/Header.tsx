@@ -6,9 +6,10 @@ import { Bell, ChevronRight } from 'lucide-react';
 
 interface HeaderProps {
   breadcrumbs: { label: string; href?: string }[];
+  actionButton?: React.ReactNode;
 }
 
-export const Header: React.FC<HeaderProps> = ({ breadcrumbs }) => {
+export const Header: React.FC<HeaderProps> = ({ breadcrumbs, actionButton }) => {
   const [currentDateTime, setCurrentDateTime] = useState<{
     dateStr: string;
     timeStr: string;
@@ -76,6 +77,8 @@ export const Header: React.FC<HeaderProps> = ({ breadcrumbs }) => {
             Loading...
           </span>
         )}
+
+        {actionButton && <div className="hidden md:block">{actionButton}</div>}
 
         <div className="h-4 w-px bg-gray-200 hidden sm:block" />
 
