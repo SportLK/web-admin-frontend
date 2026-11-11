@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Sidebar } from '@/components/Sidebar';
-import { Header } from '@/components/Header';
+import { AdminShell } from '@/components/AdminShell';
 import { tournamentAdminApi } from '@/services/tournamentAdminApi';
 import { AdminOrganizerApplication } from '@/types/tournamentAdmin';
 import {
@@ -117,14 +116,9 @@ export default function OrganizerApprovalsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA] font-sans">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header breadcrumbs={[{ label: 'Organizer approvals' }]} />
-
-        <main className="p-8 max-w-7xl w-full mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <>
+      <AdminShell breadcrumbs={[{ label: 'Organizer approvals' }]}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Organizer approvals</h1>
               <p className="text-sm text-gray-500 mt-1">
@@ -328,8 +322,7 @@ export default function OrganizerApprovalsPage() {
               </table>
             </div>
           </div>
-        </main>
-      </div>
+        </AdminShell>
 
       {/* ── MODAL: Review & Accredit Organizer ───────────────────────── */}
       {reviewModalApp && (
@@ -433,6 +426,6 @@ export default function OrganizerApprovalsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

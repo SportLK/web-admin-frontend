@@ -32,7 +32,7 @@ export const ReportReviewModal: React.FC<ReportReviewModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl w-full max-w-lg overflow-hidden">
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-start justify-between">
           <div className="flex items-center gap-3">

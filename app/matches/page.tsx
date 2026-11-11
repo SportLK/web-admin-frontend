@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from '../components/Header';
+import { AdminShell } from '@/components/AdminShell';
 import { matchesApi } from '../services/api';
 import { adminSocket } from '../services/socket';
 import { Match, MatchStatus } from '../types';
@@ -99,20 +99,25 @@ export default function MatchesPage() {
   const completedCount = matches.filter((m) => m.matchStatus === 'COMPLETED').length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header - Strictly Monitoring & Oversight */}
-      <Header
-        title="Matches & Live Monitoring"
-        subtitle="Live oversight of ongoing matches, scores, and scheduled fixtures across Sri Lanka"
+    <>
+      <AdminShell
+        breadcrumbs={[{ label: 'Matches' }]}
         actionButton={
-          <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Live Sync Active</span>
+            <span className="hidden sm:inline">Live Sync Active</span>
           </div>
         }
-      />
-
-      <div className="p-8 max-w-7xl mx-auto space-y-6">
+      >
+        {/* Page Heading */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Matches & live monitoring</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Live oversight of ongoing fixtures, scores, and scheduled games across Sri Lanka.
+            </p>
+          </div>
+        </div>
 
         {/* Backend Offline Alert */}
         {error && (
@@ -431,7 +436,7 @@ export default function MatchesPage() {
             </div>
           )}
         </div>
-      </div>
+      </AdminShell>
 
       {/* Match Details Modal */}
       <MatchDetailsModal
@@ -439,6 +444,6 @@ export default function MatchesPage() {
         isOpen={!!detailsMatch}
         onClose={() => setDetailsMatch(null)}
       />
-    </div>
+    </>
   );
 }

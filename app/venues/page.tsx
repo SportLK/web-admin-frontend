@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from '../components/Header';
+import { AdminShell } from '@/components/AdminShell';
 import { venuesApi } from '../services/api';
 import { Venue, CreateVenueDto } from '../types';
 import { VenueModal } from './components/VenueModal';
@@ -123,23 +123,28 @@ export default function VenuesPage() {
   const uniqueCities = Array.from(new Set(venues.map((v) => v.city).filter(Boolean)));
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Top Header */}
-      <Header
-        title="Venues"
-        subtitle="Manage sports grounds, GPS spatial coordinates, pricing, and facilities"
+    <>
+      <AdminShell
+        breadcrumbs={[{ label: 'Venues' }]}
         actionButton={
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm shadow-emerald-500/20 transition-all cursor-pointer"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm shadow-emerald-500/20 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            Add Venue
+            <span>Add Venue</span>
           </button>
         }
-      />
-
-      <div className="p-8 max-w-7xl mx-auto space-y-6">
+      >
+        {/* Page Heading */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Venues & facility management</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Manage sports grounds, GPS spatial coordinates, hourly rates, and facilities.
+            </p>
+          </div>
+        </div>
         {/* Toast Alert */}
         {toastMessage && (
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between shadow-sm animate-in fade-in duration-200">
@@ -415,7 +420,7 @@ export default function VenuesPage() {
             </div>
           )}
         </div>
-      </div>
+      </AdminShell>
 
       {/* Add Modal */}
       <VenueModal
@@ -438,6 +443,6 @@ export default function VenuesPage() {
         onClose={() => setDeletingVenue(null)}
         onConfirm={handleDeleteConfirm}
       />
-    </div>
+    </>
   );
 }

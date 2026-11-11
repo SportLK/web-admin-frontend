@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Sidebar } from '@/components/Sidebar';
-import { Header } from '@/components/Header';
+import { AdminShell } from '@/components/AdminShell';
 import { tournamentAdminApi } from '@/services/tournamentAdminApi';
 import {
   AdminTournament,
@@ -217,26 +216,21 @@ export default function TournamentsAdminPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA] font-sans">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header
-          breadcrumbs={[{ label: 'Tournaments' }]}
-          actionButton={
-            <button
-              onClick={handleSeedDemo}
-              disabled={isSubmitting}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Seed Demo Data</span>
-            </button>
-          }
-        />
-
-        <main className="p-8 max-w-7xl w-full mx-auto space-y-6">
-          {/* Page Heading */}
+    <>
+      <AdminShell
+        breadcrumbs={[{ label: 'Tournaments' }]}
+        actionButton={
+          <button
+            onClick={handleSeedDemo}
+            disabled={isSubmitting}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Seed Demo Data</span>
+          </button>
+        }
+      >
+        {/* Page Heading */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Tournament management</h1>
@@ -694,8 +688,7 @@ export default function TournamentsAdminPage() {
               </div>
             </div>
           )}
-        </main>
-      </div>
+        </AdminShell>
 
       {/* ── MODAL: Update Tournament Status ──────────────────────────── */}
       {statusModalTournament && (
@@ -933,6 +926,6 @@ export default function TournamentsAdminPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

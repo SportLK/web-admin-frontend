@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sidebar } from '@/components/Sidebar';
-import { Header } from '@/components/Header';
+import { AdminShell } from '@/components/AdminShell';
 import { ReportReviewModal } from '@/components/ReportReviewModal';
 import { SuspendTeamModal } from '@/components/SuspendTeamModal';
 import { INITIAL_REPORTS, INITIAL_TEAMS, TeamReport, Team } from '@/data/mockData';
@@ -125,14 +124,9 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA]">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header breadcrumbs={[{ label: 'Reports' }]} />
-
-        <main className="p-8 max-w-7xl w-full mx-auto space-y-6">
-          {/* Page Heading matching Figma 09 / Reports */}
+    <>
+      <AdminShell breadcrumbs={[{ label: 'Reports' }]}>
+        {/* Page Heading matching Figma 09 / Reports */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
@@ -419,8 +413,7 @@ export default function ReportsPage() {
               </div>
             </div>
           )}
-        </main>
-      </div>
+        </AdminShell>
 
       {/* Modals */}
       <ReportReviewModal
@@ -442,6 +435,6 @@ export default function ReportsPage() {
           setSuspensionTargetTeam(null);
         }}
       />
-    </div>
+    </>
   );
 }

@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Sidebar } from '@/components/Sidebar';
-import { Header } from '@/components/Header';
+import { AdminShell } from '@/components/AdminShell';
 import { TeamDetailModal } from '@/components/TeamDetailModal';
 import { SuspendTeamModal } from '@/components/SuspendTeamModal';
 import { INITIAL_TEAMS, Team } from '@/data/mockData';
@@ -217,14 +216,9 @@ export default function TeamsPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8F9FA]">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header breadcrumbs={[{ label: 'Teams' }]} />
-
-        <main className="p-8 max-w-7xl w-full mx-auto space-y-6">
-          {/* Page Heading matching Figma 04 / Teams */}
+    <>
+      <AdminShell breadcrumbs={[{ label: 'Teams' }]}>
+        {/* Page Heading matching Figma 04 / Teams */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Team management</h1>
@@ -456,8 +450,7 @@ export default function TeamsPage() {
               <span className="text-[11px] text-gray-400">SportLK Official Team Registry</span>
             </div>
           </div>
-        </main>
-      </div>
+        </AdminShell>
 
       {/* Modals */}
       <TeamDetailModal
@@ -476,6 +469,6 @@ export default function TeamsPage() {
         onClose={() => setSelectedTeamForSuspension(null)}
         onConfirmSuspension={handleConfirmSuspension}
       />
-    </div>
+    </>
   );
 }
