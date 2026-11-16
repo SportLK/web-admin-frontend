@@ -44,8 +44,8 @@ export default function OrganizerApprovalsPage() {
     try {
       const data = await tournamentAdminApi.getOrganizerApplications();
       setApplications(data);
-    } catch {
-      showToast('Error loading organizer applications');
+    } catch (error) {
+      showToast(error instanceof Error ? `Error loading applications: ${error.message}` : 'Error loading applications');
     } finally {
       setLoading(false);
     }
@@ -96,8 +96,8 @@ export default function OrganizerApprovalsPage() {
       setReviewModalApp(null);
       setAdminFeedback('');
       await loadApplications();
-    } catch {
-      showToast('Failed to review application');
+    } catch (error) {
+      showToast(error instanceof Error ? `Review failed: ${error.message}` : 'Failed to review application');
     } finally {
       setIsSubmitting(false);
     }
@@ -121,9 +121,9 @@ export default function OrganizerApprovalsPage() {
       <AdminShell breadcrumbs={[{ label: 'Organizer approvals' }]}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Organizer approvals</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Role applications</h1>
               <p className="text-sm text-gray-500 mt-1">
-                Review candidate credentials, verify past hosting track records, and approve tournament organizers.
+                Review team manager and tournament organizer applications.
               </p>
             </div>
 
@@ -254,6 +254,9 @@ export default function OrganizerApprovalsPage() {
                             <span className="font-bold text-slate-900 text-sm block">
                               {app.organization}
                             </span>
+                            <span className="mt-1 inline-block rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase text-slate-600">
+                              {app.requestedRole === 'TEAM_MANAGER' ? 'Team manager' : 'Tournament organizer'}
+                            </span>
                             <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1.5 mt-0.5">
                               <User className="w-3 h-3" />
                               {app.user?.displayName || app.user?.fullName || 'Applicant'} •{' '}
@@ -333,7 +336,7 @@ export default function OrganizerApprovalsPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-widest">
-                  TOURNAMENT ORGANIZER APPLICATION
+                  {reviewModalApp.requestedRole === 'TEAM_MANAGER' ? 'TEAM MANAGER APPLICATION' : 'TOURNAMENT ORGANIZER APPLICATION'}
                 </span>
                 <h3 className="text-base font-extrabold text-slate-900">
                   {reviewModalApp.organization}
@@ -378,7 +381,7 @@ export default function OrganizerApprovalsPage() {
             {/* Track Record & Portfolio */}
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                Hosting Credentials & Past Tournament Experience
+                {reviewModalApp.requestedRole === 'TEAM_MANAGER' ? 'Team Management Experience' : 'Hosting Credentials & Past Tournament Experience'}
               </span>
               <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-line">
                 {reviewModalApp.experience}
@@ -421,7 +424,7 @@ export default function OrganizerApprovalsPage() {
                   disabled={isSubmitting}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-sm cursor-pointer"
                 >
-                  Accredit & Approve ✓
+                  {reviewModalApp.requestedRole === 'TEAM_MANAGER' ? 'Approve role' : 'Accredit & Approve ✓'}
                 </button>
               </div>
             </div>

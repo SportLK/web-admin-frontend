@@ -39,13 +39,11 @@ export const tournamentAdminApi = {
   },
   async getOrganizerApplications(): Promise<AdminOrganizerApplication[]> {
     const rows = await apiRequest<ApiRoleApplication[]>('/role-applications', { cache: 'no-store' });
-    return rows
-      .filter((row) => row.requestedRole === 'TOURNAMENT_ORGANIZER')
-      .map((row) => {
+    return rows.map((row) => {
         const [organization = '', ...experience] = (row.justificationNotes ?? '').split(' | ');
         return {
           ...row,
-          requestedRole: 'TOURNAMENT_ORGANIZER',
+          requestedRole: row.requestedRole === 'TEAM_MANAGER' ? 'TEAM_MANAGER' : 'TOURNAMENT_ORGANIZER',
           organization,
           experience: experience.join(' | '),
           city: row.user?.city,

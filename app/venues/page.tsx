@@ -181,7 +181,6 @@ export default function VenuesPage() {
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Registered Grounds</p>
             <p className="text-2xl font-black text-slate-900 mt-1">{totalCount}</p>
-            <p className="text-xs text-slate-500 mt-1">Stored in MySQL with Spatial SRID 4326</p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
