@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AdminShell } from '@/components/AdminShell';
 import { ReportReviewModal } from '@/components/ReportReviewModal';
 import { SuspendTeamModal } from '@/components/SuspendTeamModal';
-import { INITIAL_REPORTS, INITIAL_TEAMS, TeamReport, Team } from '@/data/mockData';
+import { TeamReport, Team } from '@/data/mockData';
 import { adminApi } from '@/services/adminApi';
 import {
   Flag,
@@ -20,10 +20,16 @@ import {
 } from 'lucide-react';
 
 export default function ReportsPage() {
-  const [reports, setReports] = useState<TeamReport[]>(INITIAL_REPORTS);
+  const [reports, setReports] = useState<TeamReport[]>([]);
   const [selectedReport, setSelectedReport] = useState<TeamReport | null>(null);
   const [suspensionTargetTeam, setSuspensionTargetTeam] = useState<Team | null>(null);
   const [activeTab, setActiveTab] = useState<'reports' | 'analytics'>('reports');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [draftReport, setDraftReport] = useState({ teamId: '', reason: 'OTHER', details: '', severity: 'MEDIUM' });
+  const [savingReport, setSavingReport] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [analytics, setAnalytics] = useState<{ avgSquadSize: string; complianceRate: number; totalTeams: number; activeTeams: number; totalReports: number; openReports: number } | null>(null);
 
   // Real-time synchronization state
   const [isLiveConnected, setIsLiveConnected] = useState(false);
@@ -35,12 +41,8 @@ export default function ReportsPage() {
     if (!silent) setIsSyncing(true);
     try {
       const data = await adminApi.getReports();
-      if (Array.isArray(data) && data.length > 0) {
-        setReports(data);
-        setIsLiveConnected(true);
-      } else {
-        setIsLiveConnected(true);
-      }
+      setReports(Array.isArray(data) ? data : []);
+      setIsLiveConnected(true);
       setLastSynced(new Date());
     } catch {
       setIsLiveConnected(false);
@@ -57,6 +59,11 @@ export default function ReportsPage() {
     }, 8000);
     return () => clearInterval(interval);
   }, [fetchLiveReports]);
+
+  useEffect(() => {
+    adminApi.getTeams().then(setTeams).catch(() => setTeams([]));
+    adminApi.getAnalytics().then(setAnalytics).catch(() => setAnalytics(null));
+  }, []);
 
   // Metrics
   const openReports = reports.filter((r) => r.status === 'Open').length;
@@ -91,14 +98,13 @@ export default function ReportsPage() {
       await adminApi.updateReport(reportId, { status: statusEnum, resolutionNotes: notes });
     } catch (err) {
       console.error('Failed to update report on backend:', err);
+      await fetchLiveReports(true);
+      alert(err instanceof Error ? err.message : 'Could not update this report.');
     }
   };
 
   const handleTriggerTeamSuspension = (teamId: string) => {
-    const target = INITIAL_TEAMS.find((t) => t.id === teamId);
-    if (target) {
-      setSuspensionTargetTeam(target);
-    }
+    adminApi.getTeamDetail(teamId).then(setSuspensionTargetTeam).catch((error) => alert(error instanceof Error ? error.message : 'Could not load team details.'));
   };
 
   const handleExportCSV = () => {
@@ -123,6 +129,22 @@ export default function ReportsPage() {
     document.body.removeChild(link);
   };
 
+  const handleCreateReport = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSavingReport(true);
+    setFormError('');
+    try {
+      await adminApi.createReport(draftReport);
+      setCreateOpen(false);
+      setDraftReport({ teamId: '', reason: 'OTHER', details: '', severity: 'MEDIUM' });
+      await fetchLiveReports(true);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Could not create the report.');
+    } finally {
+      setSavingReport(false);
+    }
+  };
+
   return (
     <>
       <AdminShell breadcrumbs={[{ label: 'Reports' }]}>
@@ -138,6 +160,9 @@ export default function ReportsPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <button type="button" onClick={() => setCreateOpen(true)} className="rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800">
+                Add report
+              </button>
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                   isLiveConnected
@@ -333,7 +358,7 @@ export default function ReportsPage() {
                     Average registered players per active squad
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-zinc-900">12.8</span>
+                    <span className="text-3xl font-extrabold text-zinc-900">{analytics?.avgSquadSize ?? '—'}</span>
                     <span className="text-xs text-emerald-600 font-semibold">
                       Within 5-15 rule
                     </span>
@@ -345,27 +370,27 @@ export default function ReportsPage() {
 
                 <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-2xs">
                   <h3 className="text-sm font-bold text-zinc-900 mb-1">Platform Standing</h3>
-                  <p className="text-xs text-gray-500 mb-4">Good standing vs Suspended teams</p>
+                  <p className="text-xs text-gray-500 mb-4">{analytics ? `${analytics.activeTeams} of ${analytics.totalTeams} teams currently active` : 'Loading team standing'}</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-emerald-600">83.3%</span>
+                    <span className="text-3xl font-extrabold text-emerald-600">{analytics ? `${analytics.complianceRate}%` : '—'}</span>
                     <span className="text-xs text-gray-400">Active status</span>
                   </div>
                   <div className="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '83%' }} />
+                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${analytics?.complianceRate ?? 0}%` }} />
                   </div>
                 </div>
 
                 <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-2xs">
                   <h3 className="text-sm font-bold text-zinc-900 mb-1">Challenge Dispute Rate</h3>
                   <p className="text-xs text-gray-500 mb-4">
-                    Reported issues per 100 played matches
+                    Open moderation reports per team
                   </p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-zinc-900">1.4%</span>
-                    <span className="text-xs text-emerald-600 font-semibold">Low dispute</span>
+                    <span className="text-3xl font-extrabold text-zinc-900">{analytics && analytics.totalTeams > 0 ? (analytics.openReports / analytics.totalTeams).toFixed(2) : '—'}</span>
+                    <span className="text-xs text-emerald-600 font-semibold">Current rate</span>
                   </div>
                   <div className="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
-                    <div className="bg-lime-400 h-full rounded-full" style={{ width: '14%' }} />
+                    <div className="bg-lime-400 h-full rounded-full" style={{ width: `${analytics && analytics.totalReports ? Math.min(100, (analytics.openReports / analytics.totalReports) * 100) : 0}%` }} />
                   </div>
                 </div>
               </div>
@@ -414,6 +439,28 @@ export default function ReportsPage() {
             </div>
           )}
         </AdminShell>
+
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <form onSubmit={handleCreateReport} className="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
+            <div><h2 className="text-lg font-bold text-zinc-900">Create team report</h2><p className="mt-1 text-sm text-gray-500">This report will be saved to the moderation database under your admin account.</p></div>
+            <label className="block text-sm font-medium text-zinc-700">Team
+              <select required value={draftReport.teamId} onChange={(e) => setDraftReport({ ...draftReport, teamId: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-zinc-900">
+                <option value="">Choose a team</option>{teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}
+              </select>
+            </label>
+            <label className="block text-sm font-medium text-zinc-700">Reason
+              <select value={draftReport.reason} onChange={(e) => setDraftReport({ ...draftReport, reason: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-zinc-900">
+                <option value="OTHER">Other concern</option><option value="MISLEADING_INFORMATION">Misleading information</option><option value="ROSTER_ELIGIBILITY_DISPUTE">Roster eligibility dispute</option><option value="UNSPORTSMANLIKE_CONDUCT">Unsportsmanlike conduct</option><option value="INACTIVE_FORFEIT">Inactive / forfeit</option><option value="HARASSMENT">Harassment</option>
+              </select>
+            </label>
+            <label className="block text-sm font-medium text-zinc-700">Details<textarea required minLength={5} value={draftReport.details} onChange={(e) => setDraftReport({ ...draftReport, details: e.target.value })} rows={4} className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm text-zinc-900" /></label>
+            <label className="block text-sm font-medium text-zinc-700">Severity<select value={draftReport.severity} onChange={(e) => setDraftReport({ ...draftReport, severity: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-zinc-900"><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option></select></label>
+            {formError && <p role="alert" className="text-sm text-rose-700">{formError}</p>}
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setCreateOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-zinc-800">Cancel</button><button disabled={savingReport || teams.length === 0} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingReport ? 'Saving…' : 'Create report'}</button></div>
+          </form>
+        </div>
+      )}
 
       {/* Modals */}
       <ReportReviewModal
