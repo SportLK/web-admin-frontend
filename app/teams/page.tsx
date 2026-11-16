@@ -4,8 +4,8 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { AdminShell } from '@/components/AdminShell';
 import { TeamDetailModal } from '@/components/TeamDetailModal';
 import { SuspendTeamModal } from '@/components/SuspendTeamModal';
-import { INITIAL_TEAMS, Team } from '@/data/mockData';
-import { adminApi } from '@/services/adminApi';
+import { Team } from '@/data/mockData';
+import { adminApi, RegisteredPlayer } from '@/services/adminApi';
 import {
   Search,
   Ban,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function TeamsPage() {
-  const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSport, setSelectedSport] = useState<string>('All');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
@@ -29,12 +29,8 @@ export default function TeamsPage() {
     if (!silent) setIsSyncing(true);
     try {
       const data = await adminApi.getTeams();
-      if (Array.isArray(data) && data.length > 0) {
-        setTeams(data);
-        setIsLiveConnected(true);
-      } else {
-        setIsLiveConnected(true);
-      }
+      setTeams(Array.isArray(data) ? data : []);
+      setIsLiveConnected(true);
       setLastSynced(new Date());
     } catch {
       setIsLiveConnected(false);
@@ -55,6 +51,36 @@ export default function TeamsPage() {
   // Modals state
   const [selectedTeamForView, setSelectedTeamForView] = useState<Team | null>(null);
   const [selectedTeamForSuspension, setSelectedTeamForSuspension] = useState<Team | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [managerSearch, setManagerSearch] = useState('');
+  const [managerResults, setManagerResults] = useState<RegisteredPlayer[]>([]);
+  const [selectedManager, setSelectedManager] = useState<RegisteredPlayer | null>(null);
+  const [newTeam, setNewTeam] = useState({ teamName: '', sportType: 'FUTSAL', primaryLocationCity: '', teamBio: '' });
+  const [createError, setCreateError] = useState('');
+  const [creatingTeam, setCreatingTeam] = useState(false);
+
+  useEffect(() => {
+    if (managerSearch.trim().length < 2) { setManagerResults([]); return; }
+    const timer = setTimeout(() => adminApi.searchRegisteredPlayers(managerSearch).then(setManagerResults).catch(() => setManagerResults([])), 250);
+    return () => clearTimeout(timer);
+  }, [managerSearch]);
+
+  const handleCreateTeam = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedManager) return;
+    setCreatingTeam(true);
+    setCreateError('');
+    try {
+      await adminApi.createTeam({ ...newTeam, managerId: selectedManager.id });
+      setCreateOpen(false);
+      setSelectedManager(null);
+      setManagerSearch('');
+      setNewTeam({ teamName: '', sportType: 'FUTSAL', primaryLocationCity: '', teamBio: '' });
+      await fetchLiveTeams(true);
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : 'Could not create the team.');
+    } finally { setCreatingTeam(false); }
+  };
 
   // Statistics
   const totalTeams = teams.length;
@@ -135,6 +161,8 @@ export default function TeamsPage() {
       }
     } catch (err) {
       console.error('Failed to suspend team on backend:', err);
+      await fetchLiveTeams(true);
+      alert(err instanceof Error ? err.message : 'Could not suspend this team.');
     }
   };
 
@@ -176,6 +204,8 @@ export default function TeamsPage() {
       }
     } catch (err) {
       console.error('Failed to reactivate team on backend:', err);
+      await fetchLiveTeams(true);
+      alert(err instanceof Error ? err.message : 'Could not reactivate this team.');
     }
   };
 
@@ -212,6 +242,8 @@ export default function TeamsPage() {
       await adminApi.removeMember(teamId, memberId);
     } catch (err) {
       console.error('Failed to remove member on backend:', err);
+      await fetchLiveTeams(true);
+      alert(err instanceof Error ? err.message : 'Could not remove this member.');
     }
   };
 
@@ -229,6 +261,7 @@ export default function TeamsPage() {
 
             {/* Real-time Data Sync Controls */}
             <div className="flex items-center gap-2.5">
+              <button type="button" onClick={() => setCreateOpen(true)} className="rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Add team</button>
               <span
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
                   isLiveConnected
@@ -462,6 +495,14 @@ export default function TeamsPage() {
         }}
         onReactivateTeam={handleReactivateTeam}
         onRemoveMember={handleRemoveMember}
+        onRequestPlayer={async (teamId, userId) => {
+          try {
+            await adminApi.requestPlayerToJoin(teamId, userId);
+            alert('Join request saved. The selected registered player is now pending team approval.');
+          } catch (error) {
+            alert(error instanceof Error ? error.message : 'Could not create the join request.');
+          }
+        }}
       />
 
       <SuspendTeamModal
@@ -469,6 +510,21 @@ export default function TeamsPage() {
         onClose={() => setSelectedTeamForSuspension(null)}
         onConfirmSuspension={handleConfirmSuspension}
       />
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <form onSubmit={handleCreateTeam} className="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-2xl">
+            <div><h2 className="text-lg font-bold text-zinc-900">Add a team</h2><p className="mt-1 text-sm text-gray-500">Choose an existing SportLK account as team manager.</p></div>
+            <label className="block text-sm font-medium text-zinc-700">Team name<input required maxLength={100} value={newTeam.teamName} onChange={(e) => setNewTeam({ ...newTeam, teamName: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm text-zinc-900" /></label>
+            <label className="block text-sm font-medium text-zinc-700">Sport<select value={newTeam.sportType} onChange={(e) => setNewTeam({ ...newTeam, sportType: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-zinc-900"><option value="FUTSAL">Futsal</option><option value="FOOTBALL">Football</option><option value="CRICKET">Cricket</option><option value="BADMINTON">Badminton</option><option value="BASKETBALL">Basketball</option><option value="VOLLEYBALL">Volleyball</option></select></label>
+            <label className="block text-sm font-medium text-zinc-700">City<input value={newTeam.primaryLocationCity} onChange={(e) => setNewTeam({ ...newTeam, primaryLocationCity: e.target.value })} className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm text-zinc-900" /></label>
+            <label className="block text-sm font-medium text-zinc-700">Manager search (registered players only)<input value={selectedManager ? `${selectedManager.fullName} · ${selectedManager.email}` : managerSearch} onChange={(e) => { setSelectedManager(null); setManagerSearch(e.target.value); }} placeholder="Search by name or email" className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm text-zinc-900" /></label>
+            {!selectedManager && managerResults.length > 0 && <div className="max-h-36 overflow-auto rounded-lg border border-gray-200">{managerResults.map((player) => <button key={player.id} type="button" onClick={() => { setSelectedManager(player); setManagerSearch(''); setManagerResults([]); }} className="block w-full border-b border-gray-100 px-3 py-2 text-left text-sm text-zinc-800 hover:bg-gray-50">{player.fullName} <span className="text-gray-500">{player.email}</span></button>)}</div>}
+            <label className="block text-sm font-medium text-zinc-700">Team description<textarea value={newTeam.teamBio} onChange={(e) => setNewTeam({ ...newTeam, teamBio: e.target.value })} rows={3} className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm text-zinc-900" /></label>
+            {createError && <p role="alert" className="text-sm text-rose-700">{createError}</p>}
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setCreateOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-zinc-800">Cancel</button><button disabled={!selectedManager || creatingTeam} className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{creatingTeam ? 'Creating…' : 'Create team'}</button></div>
+          </form>
+        </div>
+      )}
     </>
   );
 }
