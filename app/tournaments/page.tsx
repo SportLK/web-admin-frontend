@@ -25,7 +25,6 @@ import {
   Eye,
   Trash2,
   RefreshCw,
-  Sparkles,
   ExternalLink,
 } from 'lucide-react';
 
@@ -169,19 +168,6 @@ export default function TournamentsAdminPage() {
     }
   };
 
-  const handleSeedDemo = async () => {
-    setIsSubmitting(true);
-    try {
-      const res = await tournamentAdminApi.seedDemo();
-      showToast(res.message);
-      await loadData();
-    } catch {
-      showToast('Demo data loaded');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const getStatusBadge = (status: TournamentStatus) => {
     switch (status) {
       case 'OPEN_FOR_REGISTRATION':
@@ -219,16 +205,6 @@ export default function TournamentsAdminPage() {
     <>
       <AdminShell
         breadcrumbs={[{ label: 'Tournaments' }]}
-        actionButton={
-          <button
-            onClick={handleSeedDemo}
-            disabled={isSubmitting}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Seed Demo Data</span>
-          </button>
-        }
       >
         {/* Page Heading */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -319,7 +295,7 @@ export default function TournamentsAdminPage() {
                   onClick={() => setActiveTab('tournaments')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
                     activeTab === 'tournaments'
-                      ? 'bg-slate-900 text-white shadow-xs'
+                      ? 'bg-emerald-700 text-white shadow-xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
@@ -331,7 +307,7 @@ export default function TournamentsAdminPage() {
                   onClick={() => setActiveTab('reports')}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer relative ${
                     activeTab === 'reports'
-                      ? 'bg-slate-900 text-white shadow-xs'
+                      ? 'bg-emerald-700 text-white shadow-xs'
                       : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
