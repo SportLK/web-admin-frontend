@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, ChevronRight, Menu } from 'lucide-react';
+import { ChevronRight, Menu } from 'lucide-react';
 
 interface HeaderProps {
   breadcrumbs: { label: string; href?: string }[];
@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
       </div>
 
-      {/* Right Controls: Date & Real-time Clock, Notifications, Profile, Action Button */}
+      {/* Right Controls: Date & Real-time Clock, Profile, Action Button */}
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {/* Real-time Date & Clock Display */}
         {currentDateTime && (
@@ -101,16 +101,6 @@ export const Header: React.FC<HeaderProps> = ({
         {actionButton && <div>{actionButton}</div>}
 
         <div className="h-4 w-px bg-gray-200 hidden sm:block" />
-
-        {/* Notifications */}
-        <button
-          type="button"
-          className="relative p-2 rounded-xl text-gray-500 hover:text-zinc-900 hover:bg-gray-100 transition-colors"
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-lime-500 ring-2 ring-white" />
-        </button>
 
         {/* User Avatar */}
         <div className="flex items-center gap-2 pl-0.5">
