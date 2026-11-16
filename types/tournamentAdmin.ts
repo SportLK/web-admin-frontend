@@ -93,7 +93,7 @@ export interface AdminOrganizerApplication {
     email: string;
     city?: string;
   };
-  requestedRole: 'organizer' | 'TOURNAMENT_ORGANIZER';
+  requestedRole: 'organizer' | 'TOURNAMENT_ORGANIZER' | 'TEAM_MANAGER';
   organization: string;
   experience: string;
   sports?: string[];
