@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   X,
   Shield,
@@ -16,6 +16,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Team, SquadMember } from '../data/mockData';
+import { adminApi, RegisteredPlayer, TeamJoinRequest } from '../services/adminApi';
 
 interface TeamDetailModalProps {
   team: Team | null;
@@ -23,6 +24,7 @@ interface TeamDetailModalProps {
   onOpenSuspension: (team: Team) => void;
   onReactivateTeam: (teamId: string) => void;
   onRemoveMember?: (teamId: string, memberId: string) => void;
+  onRequestPlayer?: (teamId: string, userId: string) => void;
 }
 
 export const TeamDetailModal: React.FC<TeamDetailModalProps> = ({
@@ -31,8 +33,35 @@ export const TeamDetailModal: React.FC<TeamDetailModalProps> = ({
   onOpenSuspension,
   onReactivateTeam,
   onRemoveMember,
+  onRequestPlayer,
 }) => {
   const [activeTab, setActiveTab] = useState<'roster' | 'info'>('roster');
+  const [playerSearch, setPlayerSearch] = useState('');
+  const [playerResults, setPlayerResults] = useState<RegisteredPlayer[]>([]);
+  const [joinRequests, setJoinRequests] = useState<TeamJoinRequest[]>([]);
+  const [requestError, setRequestError] = useState('');
+
+  useEffect(() => {
+    if (playerSearch.trim().length < 2) { setPlayerResults([]); return; }
+    const timer = setTimeout(() => adminApi.searchRegisteredPlayers(playerSearch).then(setPlayerResults).catch(() => setPlayerResults([])), 250);
+    return () => clearTimeout(timer);
+  }, [playerSearch]);
+
+  useEffect(() => {
+    if (!team) { setJoinRequests([]); return; }
+    adminApi.getJoinRequests(team.id).then(setJoinRequests).catch(() => setJoinRequests([]));
+  }, [team]);
+
+  const decideRequest = async (requestId: string, decision: 'accept' | 'reject') => {
+    if (!team) return;
+    setRequestError('');
+    try {
+      await adminApi.decideJoinRequest(team.id, requestId, decision);
+      setJoinRequests((current) => current.filter((request) => request.id !== requestId));
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : 'Could not update the join request.');
+    }
+  };
 
   if (!team) return null;
 
@@ -229,6 +258,18 @@ export const TeamDetailModal: React.FC<TeamDetailModalProps> = ({
                   {team.squad ? team.squad.length : 0} / 15 Maximum
                 </span>
               </div>
+
+              {onRequestPlayer && (
+                <div className="mb-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <label className="block text-xs font-semibold text-zinc-700">Search registered SportLK players to request them to join
+                    <input value={playerSearch} onChange={(event) => setPlayerSearch(event.target.value)} placeholder="Type at least two letters of a name or email" className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-zinc-900" />
+                  </label>
+                  {playerResults.length > 0 && <div className="mt-2 max-h-40 overflow-auto rounded-lg border border-gray-200 bg-white">{playerResults.map((player) => <div key={player.id} className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 last:border-0"><div className="min-w-0"><p className="truncate text-sm font-medium text-zinc-900">{player.fullName}</p><p className="truncate text-xs text-gray-500">{player.email}</p></div><button type="button" onClick={() => { onRequestPlayer(team.id, player.id); setPlayerSearch(''); setPlayerResults([]); }} className="shrink-0 rounded-lg bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">Request to join</button></div>)}</div>}
+                  {playerSearch.trim().length >= 2 && playerResults.length === 0 && <p className="mt-2 text-xs text-gray-500">No active registered players match this search.</p>}
+                </div>
+              )}
+
+              {joinRequests.length > 0 && <section className="mb-5 rounded-xl border border-amber-200 bg-amber-50/50 p-4"><h4 className="text-xs font-bold text-zinc-800">Pending player join requests ({joinRequests.length})</h4><div className="mt-2 divide-y divide-amber-100">{joinRequests.map((request) => <div key={request.id} className="flex flex-wrap items-center justify-between gap-2 py-2"><div><p className="text-sm font-semibold text-zinc-900">{request.invitedUser?.fullName || `Player ${request.invitedUserId}`}</p><p className="text-xs text-gray-500">{request.invitedUser?.email || 'Registered SportLK player'}</p></div><div className="flex gap-2"><button type="button" onClick={() => decideRequest(request.id, 'accept')} className="rounded-md bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800">Approve</button><button type="button" onClick={() => decideRequest(request.id, 'reject')} className="rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-zinc-800 hover:bg-gray-50">Decline</button></div></div>)}</div>{requestError && <p role="alert" className="mt-2 text-xs text-rose-700">{requestError}</p>}</section>}
 
               {team.squad && team.squad.length > 0 ? (
                 <div className="border border-gray-200 rounded-2xl overflow-hidden">

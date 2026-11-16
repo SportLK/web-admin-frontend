@@ -13,7 +13,7 @@ export interface Team {
   id: string;
   name: string;
   location: string;
-  sport: 'Futsal' | 'Cricket' | 'Badminton' | 'Basketball';
+  sport: 'Football' | 'Futsal' | 'Cricket' | 'Badminton' | 'Basketball' | 'Volleyball';
   manager: {
     id: string;
     name: string;
@@ -45,7 +45,7 @@ export interface TeamReport {
   teamName: string;
   reportedBy: string;
   reporterRole: string;
-  reason: 'Misleading information' | 'Roster eligibility dispute' | 'Unsportsmanlike conduct' | 'Inactive / Forfeit' | 'Harassment';
+  reason: 'Misleading information' | 'Roster eligibility dispute' | 'Unsportsmanlike conduct' | 'Inactive / Forfeit' | 'Harassment' | 'Other Concern';
   details: string;
   receivedDate: string;
   status: 'Open' | 'In Review' | 'Resolved' | 'Dismissed';

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { AdminShell } from '@/components/AdminShell';
 import { tournamentAdminApi } from '@/services/tournamentAdminApi';
 import { AdminOrganizerApplication } from '@/types/tournamentAdmin';
@@ -127,6 +128,7 @@ export default function OrganizerApprovalsPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <Link href="/organizers/register" className="rounded-xl bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800">Organizer registration</Link>
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-emerald-200 bg-emerald-50 text-emerald-800">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 Live Sync Ready

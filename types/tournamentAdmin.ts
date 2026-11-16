@@ -1,4 +1,4 @@
-export type SportType = 'CRICKET' | 'FOOTBALL' | 'BADMINTON' | 'BASKETBALL' | 'VOLLEYBALL';
+export type SportType = 'CRICKET' | 'FOOTBALL' | 'FUTSAL' | 'BADMINTON' | 'BASKETBALL' | 'VOLLEYBALL';
 
 export type TournamentFormat = 'KNOCKOUT_SINGLE' | 'ROUND_ROBIN' | 'GROUP_AND_KNOCKOUT';
 

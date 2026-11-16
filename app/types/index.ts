@@ -1,4 +1,4 @@
-export type SportType = 'CRICKET' | 'FUTSAL' | 'BADMINTON' | 'BASKETBALL';
+export type SportType = 'CRICKET' | 'FOOTBALL' | 'FUTSAL' | 'BADMINTON' | 'BASKETBALL' | 'VOLLEYBALL';
 
 export type MatchStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'ABANDONED' | 'POSTPONED';
 

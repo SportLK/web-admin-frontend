@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Bell } from 'lucide-react';
 
 interface HeaderProps {
   title?: string;
@@ -22,15 +21,6 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, actionButton })
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Notification Bell */}
-        <button
-          className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors relative"
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-2.5 right-2.5 ring-2 ring-white"></span>
-        </button>
-
         {/* Action Button Slot (e.g. + Add Venue, + Schedule Match) */}
         {actionButton && <div>{actionButton}</div>}
       </div>
