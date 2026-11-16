@@ -125,7 +125,11 @@ export default function MatchesPage() {
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
               <span>
-                Backend API Notice: <strong>{error}</strong>. Ensure your NestJS backend is running on <code>http://localhost:3000</code>.
+                {error.startsWith('Cannot connect') ? (
+                  <>Backend connection failed: <strong>{error}</strong> Check that NestJS is running and that the admin API URL is correct.</>
+                ) : (
+                  <>The matches API returned an error: <strong>{error}</strong>. The backend is reachable; check the NestJS logs for the matches request.</>
+                )}
               </span>
             </div>
             <button
