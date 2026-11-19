@@ -43,10 +43,18 @@ export default function AdminLoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-5">
       <form onSubmit={submit} className="w-full max-w-md space-y-5 rounded-2xl bg-white p-8 shadow-sm">
+        <div className="flex items-center gap-3.5 mb-2">
+          <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs shrink-0">
+            <img src="/logo.jpeg" alt="SportLK" className="w-full h-full object-contain" />
+          </div>
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">SportLK</h1>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Admin Console</p>
+          </div>
+        </div>
         <div>
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-700">SportLK</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900">Admin sign in</h1>
-          <p className="mt-1 text-sm text-slate-500">Use an account with the admin role.</p>
+          <h2 className="text-xl font-bold text-slate-900">Sign in to your account</h2>
+          <p className="mt-1 text-sm text-slate-500">Enter your credentials to access the administration dashboard.</p>
         </div>
         <label className="block text-sm font-medium text-slate-700">Email
           <input required type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />

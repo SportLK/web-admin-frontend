@@ -52,8 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
           {/* Workspace Brand / Header */}
           <div className="mb-6 px-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center text-[#D7FB38] font-black text-sm tracking-tighter shadow-xs">
-                SL
+              <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 overflow-hidden flex items-center justify-center shadow-xs shrink-0">
+                <img src="/logo.jpeg" alt="SportLK" className="w-full h-full object-contain" />
               </div>
               <div>
                 <span className="font-extrabold text-zinc-900 tracking-tight text-base block leading-none">

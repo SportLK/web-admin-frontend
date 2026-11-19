@@ -96,8 +96,8 @@ export const Sidebar: React.FC = () => {
       <div>
         {/* Brand / Logo Header */}
         <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-black text-lg shadow-sm shadow-emerald-200 mr-3">
-            S
+          <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shadow-xs shrink-0 mr-3">
+            <img src="/logo.jpeg" alt="SportLK" className="w-full h-full object-contain" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">

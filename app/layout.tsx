@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SportLK · Admin Console",
   description: "Manage SportLK members, communities, reports, and role applications.",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
